@@ -58,6 +58,12 @@ export type Subtitles = {
   media_url: string;
 };
 
+export type ChapterType = {
+  start_time: number;
+  end_time: number;
+  title: string;
+};
+
 export type VideoType = {
   active: boolean;
   category: string[];
@@ -80,6 +86,9 @@ export type VideoType = {
   vid_thumb_url: string;
   vid_type: string;
   youtube_id: string;
+  chapters?: ChapterType[];
+  clip_parent?: string;
+  clip_segments?: { start_time: number; end_time: number }[];
 };
 
 export type DownloadsType = {

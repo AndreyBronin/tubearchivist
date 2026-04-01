@@ -8,10 +8,12 @@ from common.views_base import AdminWriteOnly, ApiBaseView
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from playlist.src.index import YoutubePlaylist
 from rest_framework.response import Response
+from task.tasks import cut_video
 from video.serializers import (
     CommentItemSerializer,
     PlayerSerializer,
     PlaylistNavItemSerializer,
+    VideoClipCreateSerializer,
     VideoListQuerySerializer,
     VideoListSerializer,
     VideoProgressUpdateSerializer,
@@ -19,6 +21,7 @@ from video.serializers import (
 )
 from video.src.index import YoutubeVideo
 from video.src.query_building import QueryBuilder
+from video.src.video_cut import TimecodeParseError, VideoClipper
 
 
 class VideoApiListView(ApiBaseView):
@@ -287,3 +290,52 @@ class VideoSimilarView(ApiBaseView):
         self.get_document_list(request, pagination=False)
         serializer = VideoSerializer(self.response["data"], many=True)
         return Response(serializer.data)
+
+
+class VideoClipView(ApiBaseView):
+    """resolves to /api/video/<video_id>/cut/
+    POST: start a Celery task to cut segments and save as a new clip
+    body:
+      segments: str  - timecode ranges, e.g. '00:15-01:25,16:21-18:10'
+      title: str     - optional clip title
+    """
+
+    search_base = "ta_video/_doc/"
+    permission_classes = [AdminWriteOnly]
+
+    @extend_schema(
+        request=VideoClipCreateSerializer(),
+        responses={
+            202: OpenApiResponse(description="clip task started"),
+            400: OpenApiResponse(
+                ErrorResponseSerializer(), description="invalid segments"
+            ),
+            404: OpenApiResponse(
+                ErrorResponseSerializer(), description="video not found"
+            ),
+        },
+    )
+    def post(self, request, video_id):
+        """start async clip task"""
+        data_serializer = VideoClipCreateSerializer(data=request.data)
+        data_serializer.is_valid(raise_exception=True)
+        validated = data_serializer.validated_data
+
+        self.get_document(video_id)
+        if self.status_code == 404:
+            error = ErrorResponseSerializer({"error": "video not found"})
+            return Response(error.data, status=404)
+
+        segments_str = validated["segments"]
+        try:
+            VideoClipper.parse_segments(segments_str)
+        except TimecodeParseError as exc:
+            error = ErrorResponseSerializer({"error": str(exc)})
+            return Response(error.data, status=400)
+
+        cut_video.delay(
+            video_id=video_id,
+            segments_str=segments_str,
+            title=validated.get("title", ""),
+        )
+        return Response({"message": "clip task started"}, status=202)

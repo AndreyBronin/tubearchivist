@@ -6,6 +6,8 @@ Functionality:
 - handle task locking
 """
 
+import os
+
 from appsettings.src.backup import ElasticBackup
 from appsettings.src.config import ReleaseVersion
 from appsettings.src.filesystem import Scanner
@@ -15,6 +17,8 @@ from appsettings.src.reindex import Reindex, ReindexManual, ReindexPopulate
 from celery import Task, shared_task
 from celery.exceptions import Retry
 from channel.src.index import YoutubeChannel
+from common.src.env_settings import EnvironmentSettings
+from common.src.es_connect import ElasticWrap
 from common.src.ta_redis import RedisArchivist
 from common.src.urlparser import ParsedURLType, Parser
 from download.src.queue import PendingList
@@ -25,6 +29,8 @@ from task.src.notify import Notifications
 from task.src.task_config import TASK_CONFIG
 from task.src.task_manager import TaskManager
 from video.src.meta_embed import MetadataEmbed
+from video.src.video_clip import YoutubeClip
+from video.src.video_cut import TimecodeParseError, VideoClipper
 
 
 class BaseTask(Task):
@@ -327,3 +333,51 @@ def index_channel_playlists(self, channel_id):
 def version_check():
     """check for new updates"""
     ReleaseVersion().check()
+
+
+@shared_task(bind=True, name="cut_video", base=BaseTask)
+def cut_video(self, video_id: str, segments_str: str, title: str = "") -> str | None:
+    """cut video segments and save as a new clip entry"""
+    TaskManager().init(self)
+    self.send_progress(
+        [f"Starting clip: {video_id}"], title="Cut Video Clip"
+    )
+
+    # load source document
+    resp, status_code = ElasticWrap(f"ta_video/_doc/{video_id}").get()
+    if status_code == 404 or not resp.get("_source"):
+        self.send_progress([f"Video not found: {video_id}"], level="error")
+        return None
+
+    source_doc = resp["_source"]
+
+    try:
+        segments = VideoClipper.parse_segments(segments_str)
+    except TimecodeParseError as exc:
+        self.send_progress([f"Invalid timecodes: {exc}"], level="error")
+        return None
+
+    # build source media path
+    media_url = source_doc.get("media_url", "")
+    source_path = os.path.join(EnvironmentSettings.MEDIA_DIR, media_url)
+    if not os.path.exists(source_path):
+        self.send_progress(
+            [f"Source file not found: {source_path}"], level="error"
+        )
+        return None
+
+    self.send_progress(
+        [f"Cutting {len(segments)} segment(s)..."], progress=0.3
+    )
+
+    clip = YoutubeClip(source_doc, segments, title)
+    try:
+        final_path = clip.cut_and_index(source_path)
+    except (RuntimeError, OSError) as exc:
+        self.send_progress([f"Clip failed: {exc}"], level="error")
+        return None
+
+    self.send_progress(
+        [f"Clip saved: {clip.clip_id}"], progress=1.0
+    )
+    return f"clip created: {clip.clip_id} -> {final_path}"

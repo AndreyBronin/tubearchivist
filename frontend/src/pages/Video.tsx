@@ -45,6 +45,7 @@ import NotFound from './NotFound';
 import { ApiResponseType } from '../functions/APIClient';
 import VideoThumbnail from '../components/VideoThumbail';
 import { ViewStylesEnum, ViewStylesType } from '../configuration/constants/ViewStyle';
+import VideoCutDialog from '../components/VideoCutDialog';
 
 const isInPlaylist = (videoId: string, playlist: PlaylistType) => {
   return playlist.playlist_entries.some(entry => {
@@ -119,6 +120,7 @@ const Video = () => {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
+  const [showCutDialog, setShowCutDialog] = useState(false);
   const [refreshVideoList, setRefreshVideoList] = useState(false);
   const [reindex, setReindex] = useState(false);
 
@@ -356,6 +358,30 @@ const Video = () => {
               <a download="" href={`${getApiUrl()}${video.media_url}`}>
                 <Button label="Download File" id="download-item" />
               </a>
+            </div>
+
+            <div className="button-box">
+              {isAdmin && (
+                <>
+                  {!showCutDialog && (
+                    <Button
+                      label="Cut Clip"
+                      id="cut-clip-button"
+                      onClick={() => setShowCutDialog(true)}
+                    />
+                  )}
+
+                  {showCutDialog && (
+                    <VideoCutDialog
+                      videoId={video.youtube_id}
+                      videoTitle={video.title}
+                      chapters={video.chapters}
+                      description={video.description}
+                      onClose={() => setShowCutDialog(false)}
+                    />
+                  )}
+                </>
+              )}
             </div>
 
             <div className="button-box">

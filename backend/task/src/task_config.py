@@ -108,6 +108,13 @@ VERSION_CHECK: TaskItemConfig = {
     "api_stop": False,
 }
 
+CUT_VIDEO: TaskItemConfig = {
+    "title": "Cut Video Clip",
+    "group": "video:cut",
+    "api_start": False,
+    "api_stop": False,
+}
+
 TASK_CONFIG: dict[str, TaskItemConfig] = {
     "update_subscribed": UPDATE_SUBSCRIBED,
     "download_pending": DOWNLOAD_PENDING,
@@ -122,4 +129,5 @@ TASK_CONFIG: dict[str, TaskItemConfig] = {
     "index_playlists": INDEX_PLAYLISTS,
     "subscribe_to": SUBSCRIBE_TO,
     "version_check": VERSION_CHECK,
+    "cut_video": CUT_VIDEO,
 }

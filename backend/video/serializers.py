@@ -90,6 +90,21 @@ class SubtitleItemSerializer(serializers.Serializer):
     url = serializers.URLField(allow_null=True)
 
 
+class ChapterItemSerializer(serializers.Serializer):
+    """serialize a single chapter"""
+
+    start_time = serializers.FloatField()
+    end_time = serializers.FloatField()
+    title = serializers.CharField()
+
+
+class ClipSegmentSerializer(serializers.Serializer):
+    """serialize a clip segment (start/end timecodes)"""
+
+    start_time = serializers.FloatField()
+    end_time = serializers.FloatField()
+
+
 class VideoSerializer(serializers.Serializer):
     """serialize video item"""
 
@@ -116,6 +131,9 @@ class VideoSerializer(serializers.Serializer):
     vid_thumb_url = serializers.CharField()
     vid_type = serializers.ChoiceField(choices=VideoTypeEnum.values_known())
     youtube_id = serializers.CharField()
+    chapters = ChapterItemSerializer(many=True, required=False)
+    clip_parent = serializers.CharField(required=False, allow_null=True)
+    clip_segments = ClipSegmentSerializer(many=True, required=False)
     _index = serializers.CharField(required=False)
     _score = serializers.FloatField(required=False)
 
@@ -210,3 +228,15 @@ class VideoProgressUpdateSerializer(serializers.Serializer):
     """serialize progress update data"""
 
     position = serializers.FloatField(default=0)
+
+
+class VideoClipCreateSerializer(serializers.Serializer):
+    """serialize clip creation request"""
+
+    segments = serializers.CharField(
+        help_text=(
+            "Timecode ranges to cut and concatenate, e.g. "
+            "'00:15-01:25,16:21-18:10'"
+        )
+    )
+    title = serializers.CharField(required=False, default="", allow_blank=True)

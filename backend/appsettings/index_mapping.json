@@ -413,6 +413,32 @@
                 },
                 "youtube_id": {
                     "type": "keyword"
+                },
+                "chapters": {
+                    "properties": {
+                        "end_time": {
+                            "type": "float"
+                        },
+                        "start_time": {
+                            "type": "float"
+                        },
+                        "title": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "clip_parent": {
+                    "type": "keyword"
+                },
+                "clip_segments": {
+                    "properties": {
+                        "end_time": {
+                            "type": "float"
+                        },
+                        "start_time": {
+                            "type": "float"
+                        }
+                    }
                 }
             },
             "expected_set": {

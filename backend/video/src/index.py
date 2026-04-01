@@ -216,6 +216,16 @@ class YoutubeVideo(YouTubeItem, YoutubeSubtitle):
         if description := self.youtube_meta.get("description"):
             self.json_data["description"] = description
 
+        if chapters := self.youtube_meta.get("chapters"):
+            self.json_data["chapters"] = [
+                {
+                    "start_time": float(c.get("start_time", 0)),
+                    "end_time": float(c.get("end_time", 0)),
+                    "title": c.get("title", ""),
+                }
+                for c in chapters
+            ]
+
     def _build_published(self) -> int | str:
         """build published date or timestamp"""
         timestamp = self.youtube_meta.get("timestamp")
