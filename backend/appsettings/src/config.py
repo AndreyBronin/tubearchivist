@@ -30,6 +30,7 @@ class DownloadsConfigType(TypedDict):
     """describes downloads config"""
 
     limit_speed: int | None
+    proxy: str | None
     sleep_interval: int | None
     autodelete_days: int | None
     format: str | None
@@ -79,6 +80,7 @@ class AppConfig:
         },
         "downloads": {
             "limit_speed": None,
+            "proxy": None,
             "sleep_interval": 10,
             "autodelete_days": None,
             "format": None,

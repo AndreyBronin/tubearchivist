@@ -18,6 +18,7 @@ export const useAppSettingsStore = create<AppSettingsState>(set => ({
     },
     downloads: {
       limit_speed: null,
+      proxy: null,
       sleep_interval: null,
       autodelete_days: null,
       format: null,

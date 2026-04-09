@@ -11,6 +11,7 @@ export type AppSettingsConfigType = {
   };
   downloads: {
     limit_speed: number | null;
+    proxy: string | null;
     sleep_interval: number | null;
     autodelete_days: number | null;
     format: string | null;

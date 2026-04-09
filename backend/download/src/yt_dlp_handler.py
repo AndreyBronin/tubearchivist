@@ -168,6 +168,8 @@ class VideoDownloader(DownloaderBase):
 
     def _build_obs_user(self):
         """build user customized options"""
+        if self.config["downloads"]["proxy"]:
+            self.obs["proxy"] = self.config["downloads"]["proxy"]
         if self.config["downloads"]["format"]:
             self.obs["format"] = self.config["downloads"]["format"]
         if self.config["downloads"]["format_sort"]:

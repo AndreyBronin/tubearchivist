@@ -47,6 +47,7 @@ const SettingsApplication = () => {
 
   // Downloads
   const [currentDownloadSpeed, setCurrentDownloadSpeed] = useState<number | null>(null);
+  const [currentProxy, setCurrentProxy] = useState<string | null>(null);
   const [currentThrottledRate, setCurrentThrottledRate] = useState<number | null>(null);
   const [currentScrapingSleep, setCurrentScrapingSleep] = useState<number | null>(null);
   const [currentAutodelete, setCurrentAutodelete] = useState<number | null>(null);
@@ -103,6 +104,7 @@ const SettingsApplication = () => {
 
     // Downloads
     setCurrentDownloadSpeed(appSettingsConfigData?.downloads.limit_speed || null);
+    setCurrentProxy(appSettingsConfigData?.downloads.proxy || null);
     setCurrentThrottledRate(appSettingsConfigData?.downloads.throttledratelimit || null);
     setCurrentScrapingSleep(appSettingsConfigData?.downloads.sleep_interval || null);
     setCurrentAutodelete(appSettingsConfigData?.downloads.autodelete_days || null);
@@ -295,6 +297,10 @@ const SettingsApplication = () => {
                       Limit download speed, in KB/s. Can be helpful to avoid getting blocked by YT.
                     </li>
                     <li>
+                      Proxy URL is passed directly to yt-dlp, for example:
+                      <span className="settings-current"> http://127.0.0.1:8080</span>
+                    </li>
+                    <li>
                       Throttle rate limit restarts a download if the speed falls below the defined
                       limit.
                     </li>
@@ -328,6 +334,19 @@ const SettingsApplication = () => {
                   value={currentDownloadSpeed}
                   setValue={setCurrentDownloadSpeed}
                   oldValue={appSettingsConfig.downloads.limit_speed}
+                  updateCallback={handleUpdateConfig}
+                />
+              </div>
+              <div className="settings-box-wrapper">
+                <div>
+                  <p>Proxy URL</p>
+                </div>
+                <InputConfig
+                  type="text"
+                  name="downloads.proxy"
+                  value={currentProxy}
+                  setValue={setCurrentProxy}
+                  oldValue={appSettingsConfig.downloads.proxy}
                   updateCallback={handleUpdateConfig}
                 />
               </div>
